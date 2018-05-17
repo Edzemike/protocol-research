@@ -1,0 +1,77 @@
+
+<ConnectionManager>:
+
+	#orientation: 'vertical'
+	FloatLayout:
+	
+	
+        Label:
+			size_hint: .2, .1
+			pos_hint: {"right": 0.3, 'top': 0.8}
+            text: 'MQTT'
+		ToggleButton:
+			id: toggle_button_mqtt
+			text: "Not connected"
+			size_hint: .2, .1
+			pos_hint: {"right": 0.6, 'top': .8}
+			on_state:
+				if self.state == 'down': self.state = root.connectMqtt()
+				else: root.disconnectMQTT()
+			on_state:
+				if self.state == 'down': toggle_button_mqtt.text="Connected"
+				else: toggle_button_mqtt.text="Not connected"
+        #Switch:
+		#	size_hint: .2, .1
+		#	pos_hint: {"right": 0.6, 'top': .8}
+        #    active: False
+		#	on_touch_down:
+		#		if self.active == False: root.connectMqtt()
+		#		else: root.disconnectMQTT()
+		Label:
+			size_hint: .2, .1
+			pos_hint: {"right": 0.3, 'top': 0.6}
+            text: 'AMQP'
+		ToggleButton:
+			id: toggle_button_amqp
+			text: "Not connected"
+			size_hint: .2, .1
+			pos_hint: {"right": 0.6, 'top': .6}
+			on_state:
+				if self.state == 'down': self.state = root.connectAmqp()
+				else: root.disconnectAMQP()
+			on_state:
+				if self.state == 'down': toggle_button_amqp.text="Connected"
+				else: toggle_button_amqp.text="Not connected"
+				#while self.state == 'down': root.check_for_message_Amqp()
+
+        #Switch:
+		#	size_hint: .2, .1
+		#	pos_hint: {"right": 0.6, 'top': .6}
+        #    active: False
+		#	on_touch_down:
+		#		if self.active == False: root.connectAmqp()
+		#		else: root.disconnectAMQP()
+		Label:
+			size_hint: .2, .1
+			pos_hint: {"right": 0.3, 'top': 0.4}
+            text: 'STOMP'
+		ToggleButton:
+			id: toggle_button_stomp
+			text: "Not connected"
+			size_hint: .2, .1
+			pos_hint: {"right": 0.6, 'top': .4}
+			on_state:
+				if self.state == 'down': self.state=root.connectStomp()
+				else: root.disconnectStomp()
+			on_state:
+				if self.state == 'down': toggle_button_stomp.text="Connected"
+				else: toggle_button_stomp.text="Not connected"
+        #Switch:
+		#	size_hint: .2, .1
+		#	pos_hint: {"right": 0.6, 'top': .4}
+        #    active: False
+		#	on_touch_down:
+		#		if self.active == False: root.connectStomp()
+		#		else: root.disconnectStomp()
+		
+			
