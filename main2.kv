@@ -9,11 +9,16 @@
 			size_hint: .2, .1
 			pos_hint: {"right": 0.3, 'top': 0.8}
             text: 'MQTT'
+		Label:
+			id: message_text_mqtt
+			size_hint: .2, .1
+			pos_hint: {"right": 0.3, 'top': 0.7}
+            text: ""
 		ToggleButton:
 			id: toggle_button_mqtt
 			text: "Not connected"
-			size_hint: .2, .1
-			pos_hint: {"right": 0.6, 'top': .8}
+			size_hint: .3, .1
+			pos_hint: {"right": 0.8, 'top': .8}
 			on_state:
 				if self.state == 'down': self.state = root.connectMqtt()
 				else: root.disconnectMQTT()
@@ -22,7 +27,7 @@
 				else: toggle_button_mqtt.text="Not connected"
         #Switch:
 		#	size_hint: .2, .1
-		#	pos_hint: {"right": 0.6, 'top': .8}
+		#	pos_hint: {"right": 0.8, 'top': .8}
         #    active: False
 		#	on_touch_down:
 		#		if self.active == False: root.connectMqtt()
@@ -31,11 +36,16 @@
 			size_hint: .2, .1
 			pos_hint: {"right": 0.3, 'top': 0.6}
             text: 'AMQP'
+		Label:
+			id: message_text_amqp
+			size_hint: .2, .1
+			pos_hint: {"right": 0.3, 'top': 0.5}
+            text: ""
 		ToggleButton:
 			id: toggle_button_amqp
 			text: "Not connected"
-			size_hint: .2, .1
-			pos_hint: {"right": 0.6, 'top': .6}
+			size_hint: .3, .1
+			pos_hint: {"right": 0.8, 'top': .6}
 			on_state:
 				if self.state == 'down': self.state = root.connectAmqp()
 				else: root.disconnectAMQP()
@@ -55,11 +65,16 @@
 			size_hint: .2, .1
 			pos_hint: {"right": 0.3, 'top': 0.4}
             text: 'STOMP'
+		Label:
+			id: message_text_stomp
+			size_hint: .2, .1
+			pos_hint: {"right": 0.3, 'top': 0.3}
+            text: ""
 		ToggleButton:
 			id: toggle_button_stomp
 			text: "Not connected"
-			size_hint: .2, .1
-			pos_hint: {"right": 0.6, 'top': .4}
+			size_hint: .3, .1
+			pos_hint: {"right": 0.8, 'top': .4}
 			on_state:
 				if self.state == 'down': self.state=root.connectStomp()
 				else: root.disconnectStomp()
