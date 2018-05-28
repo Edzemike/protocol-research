@@ -21,9 +21,19 @@ import ntplib
 label_mqtt = None
 label_amqp = None
 label_stomp = None
+time_to_sync = time.time() + 1*60
 
 Builder.load_file("main2.kv")
 connectedAMQP = False
+offset=None
+while offset==None:
+    try:
+        client_ntp = ntplib.NTPClient()
+        response = client_ntp.request('0.pool.ntp.org', version=3)
+        print "prietaiso ir ntp laiko skirtumas", response.offset            
+        offset = datetime.timedelta(0,response.offset)
+    except ntplib.NTPException:
+        print ntplib.NTPException
 
 conn = None # stomp
 
@@ -41,85 +51,104 @@ def on_connect(client, userdata, flags, rc):
     
 def on_message(client, userdata, message):
     time_received = datetime.datetime.now()
-    response = None
-    while response == None:
+    output_file = open("mqtt_result.csv", "a")
+    if time.time() > time_to_sync:
+        time_to_sync = time.time() + 1*60
         try:
             client_ntp = ntplib.NTPClient()
             response = client_ntp.request('0.pool.ntp.org', version=3)
             print "prietaiso ir ntp laiko skirtumas", response.offset
-
+            global offset
             offset = datetime.timedelta(0,response.offset)
-            time_received += offset
-            
-            print "received at: ", time_received
-            
-            output_file = open("mqtt_result.csv", "a")
-
-            global label_mqtt
-            label_mqtt.text = message.payload
-            print label_mqtt.text
-            
-            if message.payload=="end":
-                output_file.write(message.payload +
-                                  " at: " + str(datetime.datetime.now()+offset) + "\n")
-                output_file.close()
-                print message.payload
-            elif message.payload=="begin":
-                output_file.write("begin at: " +
-                                  str(datetime.datetime.now()+offset) + "\n")
-                output_file.close()
-            else:
-                time_sent = parser.parse(message.payload)
-                print "sent at: ", time_sent
-                output_file.write(message.payload +
-                                  "," + str(time_received) +
-                                  "," + str(time_received-time_sent) + "\n")
-                print "written"
-                output_file.close()
+            output_file.write("sync at: " +
+                              str(datetime.datetime.now()+offset) + "\n")
         except ntplib.NTPException:
             print ntplib.NTPException
+            
+    try:
+        time_received += offset
+        print "received at: ", time_received
+        
+        
+
+        global label_mqtt
+        label_mqtt.text = message.payload
+        print label_mqtt.text
+        
+        if message.payload=="end":
+            output_file.write(message.payload +
+                              " at: " + str(datetime.datetime.now()+offset) + "\n")
+            output_file.close()
+            print message.payload
+        elif message.payload=="begin":
+            global time_to_sync
+            time_to_sync = time.time() + 1 * 60
+            output_file.write("begin at: " +
+                              str(datetime.datetime.now()+offset) + "\n")
+            output_file.close()
+        else:
+            time_sent = parser.parse(message.payload)
+            print "sent at: ", time_sent
+            output_file.write(message.payload +
+                              "," + str(time_received) +
+                              "," + str(time_received-time_sent) + "\n")
+            print "written"
+            output_file.close()
+    except:
+        print "actions with output file failed"
 
 
 def callback_amqp(ch, method, properties, body):
     time_received = datetime.datetime.now()
-    response = None
-    while response == None:
+    output_file = open("amqp_result.csv", "a")
+    print "what's goin on here?"
+    if time.time() > time_to_sync:
+        print "or here?"
+        time_to_sync = time.time() + 1*60
         try:
+            print "here"
             client_ntp = ntplib.NTPClient()
             response = client_ntp.request('0.pool.ntp.org', version=3)
             print "prietaiso ir ntp laiko skirtumas", response.offset
-
+            global offset
             offset = datetime.timedelta(0,response.offset)
-            time_received += offset
-            
-            print "received at: ", time_received
-            
-            output_file = open("amqp_result.csv", "a")
-
-            global label_amqp
-            label_amqp.text = body
-            print label_amqp.text
-            
-            if body=="end":
-                output_file.write(body + " at: " +
-                                  str(datetime.datetime.now()+offset) + "\n")
-                output_file.close()
-                ch.stop_consuming()
-                print body
-            elif body=="begin":
-                output_file.write("begin at: " +
-                                  str(datetime.datetime.now()+offset) + "\n")
-                output_file.close()
-            else:
-                time_sent = parser.parse(body)
-                print "sent at: ", time_sent
-                output_file.write(body +
-                                  "," + str(time_received) +
-                                  "," + str(time_received-time_sent) + "\n")
-                print "written"
-                output_file.close()
+            output_file.write("sync at: " +
+                              str(datetime.datetime.now()+offset) + "\n")
         except ntplib.NTPException:
             print ntplib.NTPException
+
+    print "here"
+    try:
+        print "in try2"
+        time_received += offset
+        print "received at: ", time_received
+
+        global label_amqp
+        label_amqp.text = body
+        print label_amqp.text
+        
+        if body=="end":
+            output_file.write(body + " at: " +
+                              str(datetime.datetime.now()+offset) + "\n")
+            output_file.close()
+            ch.stop_consuming()
+            print body
+        elif body=="begin":
+            global time_to_sync
+            time_to_sync = time.time() + 1 * 60
+            output_file.write("begin at: " +
+                              str(datetime.datetime.now()+offset) + "\n")
+            output_file.close()
+        else:
+            time_sent = parser.parse(body)
+            print "sent at: ", time_sent
+            output_file.write(body +
+                              "," + str(time_received) +
+                              "," + str(time_received-time_sent) + "\n")
+            print "written"
+            output_file.close()
+    except:
+        print "Actions with output file failed"
 
 
 class StompListener(object): # STOMP protokolui
@@ -133,41 +162,47 @@ class StompListener(object): # STOMP protokolui
     
     def on_message(self, headers, message):
         time_received = datetime.datetime.now()
-        response = None
-        while response == None:
+        output_file = open("stomp_result.csv", "a")
+        
+        if time.time() > time_to_sync:
+            time_to_sync = time.time() + 1*60
             try:
                 client_ntp = ntplib.NTPClient()
                 response = client_ntp.request('0.pool.ntp.org', version=3)
                 print "prietaiso ir ntp laiko skirtumas", response.offset
-            
+                global offset
                 offset = datetime.timedelta(0,response.offset)
-                time_received += offset
-                
-                print "received at: ", time_received
-
-                output_file = open("stomp_result.csv", "a")
-                
-                global label_stomp
-                label_stomp.text = message
-                if message=="end":
-                    output_file.write(message + " at: " +
-                                      str(datetime.datetime.now()+offset) + "\n")
-                    output_file.close()
-                    print message
-                elif message=="begin":
-                    output_file.write("begin at: "+
-                                      str(datetime.datetime.now()+offset) + "\n")
-                    output_file.close()
-                else:
-                    time_sent = parser.parse(message)
-                    print "sent at: ", time_sent
-                    output_file.write(message +
-                                      "," + str(time_received) +
-                                      "," + str(time_received-time_sent) + "\n")
-                    print "written"
-                    output_file.close()
+                output_file.write("sync at: " +
+                                  str(datetime.datetime.now()+offset) + "\n")
             except ntplib.NTPException:
                 print ntplib.NTPException
+        try:
+            time_received += offset
+            print "received at: ", time_received
+            
+            global label_stomp
+            label_stomp.text = message
+            if message=="end":
+                output_file.write(message + " at: " +
+                                  str(datetime.datetime.now()+offset) + "\n")
+                output_file.close()
+                print message
+            elif message=="begin":
+                global time_to_sync
+                time_to_sync = time.time() + 1 * 60
+                output_file.write("begin at: "+
+                                  str(datetime.datetime.now()+offset) + "\n")
+                output_file.close()
+            else:
+                time_sent = parser.parse(message)
+                print "sent at: ", time_sent
+                output_file.write(message +
+                                  "," + str(time_received) +
+                                  "," + str(time_received-time_sent) + "\n")
+                print "written"
+                output_file.close()
+        except:
+            print "actions with output file failed"
 
 class ConnectionManager(FloatLayout):
 
